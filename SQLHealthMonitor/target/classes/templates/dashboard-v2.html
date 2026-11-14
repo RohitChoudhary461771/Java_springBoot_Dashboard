@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <title>Server Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <div>
+
+        <h2>SQL DBA Health Dashboard</h2>
+
+        <small class="text-muted">
+
+            Last Refreshed :
+            <span th:text="${lastRefreshTime}"></span>
+
+        </small>
+
+    </div>
+
+    <button type="button"
+            class="btn btn-primary"
+            onclick="location.reload();">
+
+        🔄 Refresh
+
+    </button>
+  <!--  
+    <div class="badge bg-light text-dark border p-2 fs-6">
+
+    👤 Logged In:
+    
+    <span class="text-primary fw-bold"
+          th:text="${session.loggedInUser}">
+        User
+    </span>
+
+</div>
+-->
+</div>
+
+
+
+<hr>
+    <div class="card">
+
+        <div class="card-header bg-primary text-white">
+
+            Server Information
+
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                <strong>Server :</strong>
+                <span th:text="${server.serverName}"></span>
+            </p>
+
+            <p>
+                <strong>Instance :</strong>
+                <span th:text="${server.instanceName}"></span>
+            </p>
+
+            <p>
+                <strong>Environment :</strong>
+                <span th:text="${server.environment}"></span>
+            </p>
+
+            <p>
+                <strong>Version :</strong>
+                <span th:text="${report.version}"></span>
+            </p>
+
+        </div>
+
+    </div>
+    
+    
+    <br>
+
+<!-- DATABASE STATUS  INFO-->
+<div class="card">
+
+    <div class="card-header bg-success text-white">
+
+        Database Status
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered">
+
+            <thead>
+
+                <tr>
+
+                    <th>Database Name</th>
+					<th>Status</th>
+					<th>Last Full Backup</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr th:each="db : ${databases}">
+
+                    <td th:text="${db.name}">
+                    </td>
+
+                    <td>
+
+                        <span th:if="${db.status == 'ONLINE'}"
+                              class="badge bg-success"
+                              th:text="${db.status}">
+                        </span>
+
+                        <span th:if="${db.status != 'ONLINE'}"
+                              class="badge bg-danger"
+                              th:text="${db.status}">
+                        </span>
+
+                   <!-- </td>
+                    
+                    <td th:text="${db.lastBackupDate}">
+					</td>
+					-->
+					
+					<td>
+
+    					<span class="badge"
+          				th:classappend="' bg-' + ${db.backupStatusColor}"
+         				 th:text="${db.lastBackupDate}">
+    					</span>
+
+						</td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- RESOURCES INFO -->
+
+<!-- SERVER HEALTH -->
+<div class="card mb-3">
+
+    <div class="card-header bg-dark text-white">
+        Server Health
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-header bg-primary text-white">
+                        Total RAM
+                    </div>
+                    <div class="card-body">
+                        <h4 th:text="${resources.totalServerRAMGB + ' GB'}"></h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-header bg-info text-white">
+                        Memory Utilization
+                    </div>
+                    <div class="card-body">
+
+                        <h4
+                        th:text="${resources.serverMemoryUtilization + ' %'}"
+
+                        th:classappend="
+                        ${resources.serverMemoryUtilization > 90}
+                        ? ' text-danger'
+                        : (${resources.serverMemoryUtilization > 70}
+                        ? ' text-warning'
+                        : ' text-success')">
+
+                        </h4>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-header bg-danger text-white">
+                        Server CPU
+                    </div>
+                    <div class="card-body">
+
+                        <h4
+                        th:text="${resources.totalCpuUsage + ' %'}"
+
+                        th:classappend="
+                        ${resources.totalCpuUsage > 90}
+                        ? ' text-danger'
+                        : (${resources.totalCpuUsage > 70}
+                        ? ' text-warning'
+                        : ' text-success')">
+
+                        </h4>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SQL HEALTH -->
+<div class="card mb-3">
+
+    <div class="card-header bg-dark text-white">
+        SQL Health
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-header bg-success text-white">
+                        SQL Max Memory
+                    </div>
+                    <div class="card-body">
+                        <h4 th:text="${resources.sqlMaxMemoryGB + ' GB'}"></h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-header bg-warning text-dark">
+                        SQL Memory Used
+                    </div>
+                    <div class="card-body">
+                        <h4 th:text="${resources.sqlMemoryUsedGB + ' GB'}"></h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+    <div class="card text-center">
+
+        <div class="card-header bg-secondary text-white">
+            SQL CPU
+        </div>
+
+        <div class="card-body">
+
+            <h4
+                th:text="${resources.sqlCpuUsage + ' %'}"
+                th:classappend="
+                ${resources.sqlCpuUsage > 90}
+                ? ' text-danger'
+                : (${resources.sqlCpuUsage > 70}
+                ? ' text-warning'
+                : ' text-success')">
+            </h4>
+
+        </div>
+
+    </div>
+</div>
+
+</div>
+</div>
+</div>
+<br>
+
+<!-- CRITICAL JOBS INFO-->
+<div class="card">
+
+    <div class="card-header bg-danger text-white">
+
+        Critical SQL Jobs
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered table-striped">
+
+            <thead>
+
+                <tr>
+
+                    <th>Job Name</th>
+                    <th> currentStatus</th>          
+                    <th>Status</th>
+                    <th>Last Run</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr th:each="job : ${jobs}">
+
+                    <td th:text="${job.jobName}">
+                    </td>
+
+					<td>
+
+    					<span th:if="${job.currentStatus == 'Running'}"
+          					class="badge bg-success">
+        					Running
+    					</span>
+
+    					<span th:if="${job.currentStatus == 'Not Running'}"
+          					class="badge bg-secondary">
+        					Not Running
+    					</span>
+
+					</td>
+
+                    <td>
+
+    					<span th:if="${job.status == 'Succeeded'}"
+          					class="badge bg-success"
+          					th:text="${job.status}">
+    					</span>
+
+    					<span th:if="${job.status == 'Failed'}"
+          					class="badge bg-danger"
+          					th:text="${job.status}">
+    					</span>
+
+   						 <span th:if="${job.status == 'Retry'}"
+          					class="badge bg-warning"
+          					th:text="${job.status}">
+    					</span>
+
+    					<span th:if="${job.status == 'Cancelled'}"
+         					 class="badge bg-secondary"
+          					 th:text="${job.status}">
+    					</span>
+
+					</td>
+
+                    <td th:text="${job.lastRunDate}">
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<br>
+<!-- DISK INFO-->
+<div class="card">
+
+    <div class="card-header bg-warning">
+
+        Disk Status
+
+    </div>
+
+    <div class="card-body">
+
+        <div th:if="${#lists.isEmpty(disks)}"
+             class="alert alert-info">
+
+            Disk information is currently unavailable for this SQL login.
+
+        </div>
+
+        <table th:if="${!#lists.isEmpty(disks)}"
+               class="table table-bordered table-striped">
+
+            <thead>
+
+                <tr>
+
+                   <th>Drive</th>
+				   <th>Total GB</th>
+                   <th>Free GB</th>
+                   <th>Free %</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr th:each="disk : ${disks}">
+
+					<td th:text="${disk.drive}"></td>
+
+					<td th:text="${disk.totalGB}"></td>
+
+					<td th:text="${disk.freeGB}"></td>
+
+					<td>
+    					<span class="badge"
+          				th:classappend="' bg-' + ${disk.diskStatusColor}"
+          				th:text="${#numbers.formatDecimal(disk.freePercent,1,2) + '%'}">
+    					</span>
+					</td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- AAG INFO-->
+<div class="card">
+
+    <div class="card-header bg-info text-white">
+
+        Availability Group Status
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered table-striped">
+
+            <thead>
+
+                <tr>
+
+                    <th>AG Name</th>
+                    <th>Replica Server</th>
+                    <th>Role</th>
+                    <th>Synchronization Health</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr th:each="ag : ${ags}">
+
+                    <td th:text="${ag.agName}">
+                    </td>
+
+                    <td th:text="${ag.replicaServer}">
+                    </td>
+
+                    <td>
+
+                        <span th:if="${ag.role == 'PRIMARY'}"
+                              class="badge bg-success"
+                              th:text="${ag.role}">
+                        </span>
+
+                        <span th:if="${ag.role != 'PRIMARY'}"
+                              class="badge bg-secondary"
+                              th:text="${ag.role}">
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span th:if="${ag.syncStatus == 'HEALTHY'}"
+                              class="badge bg-success"
+                              th:text="${ag.syncStatus}">
+                        </span>
+
+                        <span th:if="${ag.syncStatus != 'HEALTHY'}"
+                              class="badge bg-danger"
+                              th:text="${ag.syncStatus}">
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(ags)}">
+
+                    <td colspan="4" class="text-center">
+
+                        No Availability Groups Configured
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+<br>
+<!-- CLUSTER INFO-->
+<div class="card">
+
+    <div class="card-header bg-secondary text-white">
+
+        Cluster Status
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered table-striped">
+
+            <thead>
+
+                <tr>
+
+                    <th>Member Name</th>
+                    <th>Member Type</th>
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr th:each="node : ${clusters}">
+
+                    <td th:text="${node.nodeName}">
+                    </td>
+
+                    <td th:text="${node.nodeType}">
+                    </td>
+
+                    <td>
+
+                        <span th:if="${node.nodeStatus == 'UP'}"
+                              class="badge bg-success"
+                              th:text="${node.nodeStatus}">
+                        </span>
+
+                        <span th:if="${node.nodeStatus != 'UP'}"
+                              class="badge bg-danger"
+                              th:text="${node.nodeStatus}">
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(clusters)}">
+
+                    <td colspan="3" class="text-center">
+
+                        No Cluster Configured
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+    
+
+</div>
+
+
+
+
+<!-- BLOCKING SUMMARY -->
+
+<div class="card mt-3">
+
+    <div class="card-header bg-danger text-white">
+
+        Active Blocking Sessions
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered table-striped table-hover">
+
+            <thead>
+
+                <tr>
+
+                    <th>Blocked SPID</th>
+                    <th>Blocking SPID</th>
+                    <th>Database</th>
+                    <th>Program</th>
+                    <th>Wait</th>
+                    <th>Command</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr th:if="${#lists.isEmpty(blockingSummary)}">
+
+                    <td colspan="6"
+                        class="text-center text-success">
+
+                        No Active Blocking
+
+                    </td>
+
+                </tr>
+
+                <tr th:each="blk : ${blockingSummary}">
+
+                    <td th:text="${blk.blockedSpid}">
+                    </td>
+
+                    <td th:text="${blk.blockingSpid}">
+                    </td>
+
+                    <td th:text="${blk.databaseName}">
+                    </td>
+
+                    <td th:text="${blk.programName}">
+                    </td>
+
+                    <td>
+
+                        <span class="badge"
+                              th:classappend="' bg-' + ${blk.waitColor}"
+                              th:text="${blk.waitSeconds + ' sec'}">
+                        </span>
+
+                    </td>
+
+                    <td th:text="${blk.commandText}">
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="card mt-3">
+
+    <div class="card-header bg-dark text-white">
+        Critical Events
+    </div>
+
+    <div class="card-body text-center">
+
+        <p>
+            View critical SQL Server errors from the last 24 hours.
+        </p>
+
+		<a th:href="@{/site/{site}/dashboard/{name}/errorlogs
+            (site=${site},
+             name=${server.serverName})}"
+   class="btn btn-danger"
+   target="_blank"
+   rel="noopener noreferrer">
+    View Error Logs
+</a>
+
+
+    </div>
+
+</div>
+
+
+<HR>
+
+<div class="text-center text-muted">
+
+    SQL DBA Health Dashboard | Version 1.1.2
+
+</div>
+
+</div>
+
+<hr>
+
+
+<!-- Removing auto refresh
+<script>
+
+    setInterval(function() {
+
+        location.reload();
+
+    }, 300000);
+
+</script>
+-->
+</body>
+
+</html>
